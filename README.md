@@ -158,4 +158,5 @@ alternative hypothesis, conduct and ANOVA, and interpret the results.
 
 -   Based on the distribution and the graphed means and confidence
     intervals, we can see that female crabs appear to have higher
-    temperatures than the other crab types.
+    temperatures than the other crab types, and that male major removed
+    appear to have higher temperature than the male minor removed.

@@ -214,7 +214,7 @@ summary(aov_crab_temps)
 
 - We can see from the ANOVA test that the p-value is 7e-10, which is significantly smaller than an assumed alpha of 0.05. This means that we can reject the null hypothesis and accept the alternative hypothesis that the temperature of at least one of the crab types varies from the others. 
 
-- Based on the distribution and the graphed means and confidence intervals, we can see that female crabs appear to have higher temperatures than the other crab types.
+- Based on the distribution and the graphed means and confidence intervals, we can see that female crabs appear to have higher temperatures than the other crab types, and that male major removed appear to have higher temperature than the male minor removed.
 
 
 
