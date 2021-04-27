@@ -114,3 +114,77 @@ fish_long %>%
   theme_minimal()
 
     ## The distribution appears not to be normal, but rather is skewed right.
+
+
+# ANOVA-crabs -------------------------------------------------------------
+
+# Read Data
+crabs <- read_csv("chap15q27FiddlerCrabFans.csv") %>%
+  rename(type = crabType, temp = bodyTemperature)
+crabs
+
+temp_means <-
+  crabs %>% 
+  filter(!is.na(temp)) %>%      # remove missing values
+  group_by(type) %>% 
+  summarize(
+    mean = mean(temp),
+    sd = sd(temp),
+    n = n(),
+    sem = sd / sqrt(n),
+    upper = mean + 1.96 * sem,
+    lower = mean - 1.96 * sem
+  ) %>% 
+  print()
+
+
+# Question D --------------------------------------------------------------
+
+  ## Graph the distribution of body temperatures for each crab type:
+
+# Distribution
+crabs %>% 
+  ggplot(aes(x = temp)) +
+  geom_histogram(
+    aes(fill = type), 
+    bins = 13, 
+    alpha = 0.5, 
+    position = "identity",
+    na.rm = TRUE
+  ) +
+  scale_fill_manual(values = c("darkorange", "darkorchid", "cyan4", "#C24641")) +
+  labs(title = "Distribution of Temperatures for each Crab Type", x = "Temperature", 
+       y = "Count")
+  theme_minimal()
+
+# Means and CI
+ggplot(data = crabs, aes(x = type, y = temp)) +
+  geom_jitter(aes(color = type),
+              width = 0.1,
+              alpha = 0.7,
+              show.legend = FALSE,
+              na.rm = TRUE) +
+  geom_errorbar(aes(y = mean, ymin = lower, ymax = upper), 
+                data = temp_means,
+                width = .1, position = position_nudge(.3)) +
+  geom_point(aes(y = mean), data = temp_means,
+             position = position_nudge(.3)) +
+  scale_color_manual(values = c("darkorange","darkorchid","cyan4", "#C24641")) +
+  labs(title = "Means and Confidence Intervals for Temperatures of Each Crab Type", 
+       x = "Crab Type", y = "Temperature")
+
+
+# Question E --------------------------------------------------------------
+
+  ## Does body temperature varies among crab types? State the null and alternative 
+  ## hypothesis, conduct and ANOVA, and interpret the results.
+
+    ### The temperature does appear to vary among crab types based on the distribution.
+    
+    ### The null hypothesis for the ANOVA test is the that the temperature does not 
+      # vary among crap types, and the alternative hypothesis is that the temperature
+      # of at least one crab type does vary from the rest.
+
+(aov_crab_temps <- aov(temp ~ type, data = crabs))
+
+summary(aov_crab_temps)

@@ -1,7 +1,7 @@
 Lab 3 Report
 ================
 MaryJo Nelson
-2021-04-22
+2021-04-27
 
 ## Introduction
 
@@ -18,58 +18,7 @@ The data is provided in your GitHub repository.
 For each question below, write a sentence answering the question and
 show the code you used to come up with the answer, if applicable.
 
-``` r
-library(tidyverse)
-```
-
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
-
-    ## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
-    ## ✓ tibble  3.1.0     ✓ dplyr   1.0.5
-    ## ✓ tidyr   1.1.3     ✓ stringr 1.4.0
-    ## ✓ readr   1.4.0     ✓ forcats 0.5.1
-
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
-
-``` r
-fish <- read_csv("chap12q19ElectricFish.csv")
-```
-
-    ## 
-    ## ── Column specification ────────────────────────────────────────────────────────
-    ## cols(
-    ##   tributary = col_character(),
-    ##   speciesUpstream = col_double(),
-    ##   speciesDownstream = col_double()
-    ## )
-
-``` r
-fish_long <- 
-  pivot_longer(fish, speciesUpstream:speciesDownstream,
-               names_to = "location",
-               values_to = "species") %>% 
-  mutate(location = str_remove(location, c("species"))) %>% 
-  print()
-```
-
-    ## # A tibble: 24 x 3
-    ##    tributary location   species
-    ##    <chr>     <chr>        <dbl>
-    ##  1 Içá       Upstream        14
-    ##  2 Içá       Downstream      19
-    ##  3 Jutaí     Upstream        11
-    ##  4 Jutaí     Downstream      18
-    ##  5 Japurá    Upstream         8
-    ##  6 Japurá    Downstream       8
-    ##  7 Coari     Upstream         5
-    ##  8 Coari     Downstream       7
-    ##  9 Purus     Upstream        10
-    ## 10 Purus     Downstream      16
-    ## # … with 14 more rows
-
-## Question A
+### Question A
 
 > What is the mean different in the number of species between areas
 > upstream and downstream of a tributary? What is the 95% confidence
@@ -83,10 +32,7 @@ ANSWER
     x &lt; 8.253697
 -   I got these results by performing a t-test
 
-``` r
-ttest <- t.test(formula = species ~ location, data = fish_long)
-ttest
-```
+<!-- -->
 
     ## 
     ##  Welch Two Sample t-test
@@ -100,14 +46,10 @@ ttest
     ## mean in group Downstream   mean in group Upstream 
     ##                 16.41667                 14.58333
 
-``` r
-diff(ttest$estimate)
-```
-
     ## mean in group Upstream 
     ##              -1.833333
 
-## Question B
+### Question B
 
 > Test the hypothesis that the tributaries have no effect on the number
 > of species of electric fish.
@@ -132,39 +74,9 @@ ANSWER
         tributaries, indicating that there is no real difference in the
         means.
 
-``` r
-fish_summary <-
-  fish_long %>% 
-  group_by(location) %>% 
-  summarize(
-    n = n(),
-    mean = mean(species),
-    sd = sd(species),
-    sem = sd/sqrt(n),
-    upper = mean + 1.96 * sem,
-    lower = mean - 1.96 * sem
-  ) 
-
-
-fish_long %>% 
-  ggplot(aes(x = location, y = species)) +
-  geom_jitter(aes(color = location), 
-              shape = 16, size = 3, 
-              alpha = 0.3, width = 0.4) +
-  geom_errorbar(aes(y = mean, ymax = upper, ymin = lower), 
-                data = fish_summary, 
-                width = .1, size = .8) +
-  geom_point(aes(y = mean), 
-             data = fish_summary, 
-             size = 3) +
-  scale_color_manual(values = c("darkorange","cyan4")) +
-  theme_minimal() +
-  guides(color = "none")
-```
-
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-## Question C
+### Question C
 
 > State the assumptions that you had to make to complete parts (A) and
 > (B). Create a graph to assess whether one of those assumptions was
@@ -179,17 +91,71 @@ ANSWER
 -   The distribution appears not to be normal, but rather is skewed
     right, meaning that that assumption was not met.
 
-``` r
-fish_long %>% 
-  ggplot(aes(x = species)) +
-  geom_histogram(
-    aes(fill = location), 
-    bins = 8, 
-    alpha = 0.5, 
-    position = "identity"
-  ) +
-  scale_fill_manual(values = c("darkorange","cyan4")) +
-  theme_minimal()
-```
-
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+## ANOVA
+
+Fiddler crabs are so called because males have a greatly enlarged
+“major” claw, which is used to attract females and to defend a burrow.
+
+Darnell and Munguia (2011) recently suggested that this appendage might
+also act as a heat sink, keeping males cooler while out of the burrow on
+hot days.
+
+To test this, they placed four groups of crabs into separate plastic
+cups and supplied a source of radiant heat (60-watt light bulb) from
+above. The four groups were intact male crabs, male crabs with the major
+claw removed; male crabs with the other (minor) claw removed (control);
+and intact female fiddler crabs.
+
+They measured the body temperature of crabs every 10 minutes for 1.5
+hours. These measurements were used to calculate a rate of heat gain for
+every individual crab in degrees C/log minute. Rates of heat gain for
+all crabs are provided in the accompanying data file.
+
+### Question D
+
+Graph the distribution of body temperatures for each crab type:
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+### Question E
+
+Does body temperature varies among crab types? State the null and
+alternative hypothesis, conduct and ANOVA, and interpret the results.
+
+-   The null hypothesis for the ANOVA test is the that the temperature
+    does not vary among crap types, and the alternative hypothesis is
+    that the temperature of at least one crab type does vary from the
+    rest.
+
+<!-- -->
+
+    ## Call:
+    ##    aov(formula = temp ~ type, data = crabs)
+    ## 
+    ## Terms:
+    ##                     type Residuals
+    ## Sum of Squares  2.641310  3.467619
+    ## Deg. of Freedom        3        80
+    ## 
+    ## Residual standard error: 0.2081952
+    ## Estimated effects may be unbalanced
+    ## 1 observation deleted due to missingness
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)    
+    ## type         3  2.641  0.8804   20.31  7e-10 ***
+    ## Residuals   80  3.468  0.0433                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 1 observation deleted due to missingness
+
+-   We can see from the ANOVA test that the p-value is 7e-10, which is
+    significantly smaller than an assumed alpha of 0.05. This means that
+    we can reject the null hypothesis and accept the alternative
+    hypothesis that the temperature of at least one of the crab types
+    varies from the others.
+
+-   Based on the distribution and the graphed means and confidence
+    intervals, we can see that female crabs appear to have higher
+    temperatures than the other crab types.

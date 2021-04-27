@@ -100,8 +100,63 @@ adelie_bill_depth %>%
 
 # t-test ------------------------------------------------------------------
 
-t.test(formula = bill_depth_mm ~ sex, data = adelie_bill_depth)
+(ttest_results <- t.test(formula = bill_depth_mm ~ sex, data = adelie_bill_depth))
+unname(diff(ttest_results$estimate))
 
+
+# Compare 3 Groups --------------------------------------------------------
+
+penguins %>% 
+  ggplot(aes(x = bill_depth_mm)) +
+  geom_histogram(
+    aes(fill = species), 
+    bins = 15, 
+    alpha = 0.5, 
+    position = "identity",
+    na.rm = TRUE
+  ) +
+  scale_fill_manual(values = c("darkorange", "darkorchid", "cyan4")) +
+  theme_minimal()
+
+
+# Mean Bill Depth by Species ----------------------------------------------
+
+#table
+bill_depth_means <-
+  penguins %>% 
+  filter(!is.na(bill_depth_mm)) %>%      # remove missing values
+  group_by(species) %>% 
+  summarize(
+    mean = mean(bill_depth_mm),
+    sd = sd(bill_depth_mm),
+    n = n(),
+    sem = sd / sqrt(n),
+    upper = mean + 1.96 * sem,
+    lower = mean - 1.96 * sem
+  ) %>% 
+  print()
+
+# graph
+ggplot(data = penguins, aes(x = species, y = bill_depth_mm)) +
+  geom_jitter(aes(color = species),
+              width = 0.1,
+              alpha = 0.7,
+              show.legend = FALSE,
+              na.rm = TRUE) +
+  geom_errorbar(aes(y = mean, ymin = lower, ymax = upper), 
+                data = bill_depth_means,
+                width = .1, position = position_nudge(.3)) +
+  geom_point(aes(y = mean), data = bill_depth_means,
+             position = position_nudge(.3)) +
+  scale_color_manual(values = c("darkorange","darkorchid","cyan4"))
+
+
+# ANOVA -------------------------------------------------------------------
+
+aov_bill_depth_species <- aov(bill_depth_mm ~ species, data = penguins)
+
+
+summary(aov_bill_depth_species)
 
 
   

@@ -4,6 +4,9 @@ author: "MaryJo Nelson"
 date: "`r format(Sys.Date())`"
 output: github_document
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
 
 ## Introduction
 
@@ -24,12 +27,11 @@ fish_long <-
   pivot_longer(fish, speciesUpstream:speciesDownstream,
                names_to = "location",
                values_to = "species") %>% 
-  mutate(location = str_remove(location, c("species"))) %>% 
-  print()
+  mutate(location = str_remove(location, c("species")))
 
 ```
 
-## Question A
+### Question A
 
 > What is the mean different in the number of species between areas upstream and downstream of a tributary? What is the 95% confidence interval of this mean difference. Show your code and write a sentence giving your answer
 
@@ -48,7 +50,7 @@ diff(ttest$estimate)
 
 ```
 
-## Question B
+### Question B
 
 > Test the hypothesis that the tributaries have no effect on the number of species of electric fish.
 
@@ -91,20 +93,22 @@ fish_long %>%
              data = fish_summary, 
              size = 3) +
   scale_color_manual(values = c("darkorange","cyan4")) +
+  labs(title = "Means and Confidence Intervals for Number of Species at each Location",
+       x = "Location", y = "Number of Species") +
   theme_minimal() +
   guides(color = "none")
 
 ```
 
-## Question C
+### Question C
 
 > State the assumptions that you had to make to complete parts (A) and (B). Create a graph to assess whether one of those assumptions was met.
 
 ANSWER
 
--   The assumptions we had to make were that the sampling units were randomly sampled from the population and that the paired differences have a normal distribution in populations.
+-  The assumptions we had to make were that the sampling units were randomly sampled from the population and that the paired differences have a normal distribution in populations.
 
--   The distribution appears not to be normal, but rather is skewed right, meaning that that assumption was not met.
+-  The distribution appears not to be normal, but rather is skewed right, meaning that that assumption was not met.
 
 ```{r}
 
@@ -117,6 +121,100 @@ fish_long %>%
     position = "identity"
   ) +
   scale_fill_manual(values = c("darkorange","cyan4")) +
+  labs(title = "Distribution of Number of Species in Upstream and Downstream Locations",
+       x = "Number of Species", y = "Count") +
   theme_minimal()
 
 ```
+
+## ANOVA
+
+Fiddler crabs are so called because males have a greatly enlarged "major" claw, which is used to attract females and to defend a burrow.
+
+Darnell and Munguia (2011) recently suggested that this appendage might also act as a heat sink, keeping males cooler while out of the burrow on hot days.
+
+To test this, they placed four groups of crabs into separate plastic cups and supplied a source of radiant heat (60-watt light bulb) from above. The four groups were intact male crabs, male crabs with the major claw removed; male crabs with the other (minor) claw removed (control); and intact female fiddler crabs.
+
+They measured the body temperature of crabs every 10 minutes for 1.5 hours. These measurements were used to calculate a rate of heat gain for every individual crab in degrees C/log minute. Rates of heat gain for all crabs are provided in the accompanying data file.
+
+``` {r read crab data}
+
+crabs <- read_csv("chap15q27FiddlerCrabFans.csv") %>%
+  rename(type = crabType, temp = bodyTemperature)
+
+temp_means <-
+  crabs %>% 
+  filter(!is.na(temp)) %>%      # remove missing values
+  group_by(type) %>% 
+  summarize(
+    mean = mean(temp),
+    sd = sd(temp),
+    n = n(),
+    sem = sd / sqrt(n),
+    upper = mean + 1.96 * sem,
+    lower = mean - 1.96 * sem
+  ) 
+
+```
+
+
+### Question D
+
+Graph the distribution of body temperatures for each crab type:
+
+```{r}
+
+# Distribution
+crabs %>% 
+  ggplot(aes(x = temp)) +
+  geom_histogram(
+    aes(fill = type), 
+    bins = 13, 
+    alpha = 0.5, 
+    position = "identity",
+    na.rm = TRUE
+  ) +
+  scale_fill_manual(values = c("darkorange", "darkorchid", "cyan4", "#C24641")) +
+  labs(title = "Distribution of Temperatures for each Crab Type", x = "Temperature", 
+       y = "Count") +
+  theme_minimal()
+
+# Means and CI
+ggplot(data = crabs, aes(x = type, y = temp)) +
+  geom_jitter(aes(color = type),
+              width = 0.1,
+              alpha = 0.7,
+              show.legend = FALSE,
+              na.rm = TRUE) +
+  geom_errorbar(aes(y = mean, ymin = lower, ymax = upper), 
+                data = temp_means,
+                width = .1, position = position_nudge(.3)) +
+  geom_point(aes(y = mean), data = temp_means,
+             position = position_nudge(.3)) +
+  scale_color_manual(values = c("darkorange","darkorchid","cyan4", "#C24641")) +
+  labs(title = "Means and Confidence Intervals for Temperatures of Each Crab Type", 
+       x = "Crab Type", y = "Temperature")
+
+```
+
+### Question E
+
+Does body temperature varies among crab types? State the null and alternative hypothesis, conduct and ANOVA, and interpret the results.
+
+- The null hypothesis for the ANOVA test is the that the temperature does not vary among crap types, and the alternative hypothesis is that the temperature of at least one crab type does vary from the rest.
+
+
+```{r}
+
+(aov_crab_temps <- aov(temp ~ type, data = crabs))
+
+summary(aov_crab_temps)
+
+```
+
+- We can see from the ANOVA test that the p-value is 7e-10, which is significantly smaller than an assumed alpha of 0.05. This means that we can reject the null hypothesis and accept the alternative hypothesis that the temperature of at least one of the crab types varies from the others. 
+
+- Based on the distribution and the graphed means and confidence intervals, we can see that female crabs appear to have higher temperatures than the other crab types.
+
+
+
